@@ -42,7 +42,7 @@ contract SimpleSwap is ERC20 {
         require(deadline >= block.timestamp, "Deadline exceeded");
         require(_tokenA==tokenA && _tokenB==tokenB,"Token not found.");
         require(amountADesired > 0 && amountBDesired > 0,"Positive number of amount of tokens required.");
-        require(amountADesired >= amountAMin && amountBDesired >= amountBMin,"Positive number of amount of tokens required.");
+        // require(amountADesired >= amountAMin && amountBDesired >= amountBMin,"Positive number of amount of tokens required.");
 
         // If both reserves are empty, the square root method of calculation of liquidity is more fair than just add both amounts.
         // Slightly changed the original formula but the result it's always the same, to prevent the decimals and inaccuracies.
@@ -133,6 +133,7 @@ contract SimpleSwap is ERC20 {
         require(amountIn > 0, "Positive value of tokens required.");
         
         uint256 amountOut;
+        uint[] memory _amounts = new uint[](2);
         if(path[0] == tokenA){
             amountOut = ((amountIn * reserveB) / (reserveA + amountIn));
             require(amountOut >= amountOutMin, "Amount out tokens is less than expected.");
@@ -140,7 +141,6 @@ contract SimpleSwap is ERC20 {
             reserveA += amountIn;
             reserveB -= amountOut;
             IERC20(tokenB).transfer(to, amountOut);
-            uint[] memory _amounts = new uint[](2);
             _amounts[0]=amountIn;
             _amounts[1]=amountOut;
             return _amounts;
@@ -175,16 +175,18 @@ contract SimpleSwap is ERC20 {
     /**
     * @notice Calculates the amount of output tokenB for a given input amount of tokenA.
     * @dev Simulates a swap to determine output amount.
-    * @param _tokenA Address of the input token.
-    * @param _tokenB Address of the output token.
     * @param amountIn Amount of input tokens to simulate swapping
+    * @param reserveIn Actual reserve of tokenA in the pool.
+    * @param reserveOut Actual reserve of tokenB in the pool.
     * @return amountOut Expected amount of output tokens that would be received
     * @custom:formula amountOut = (amountIn * reserveB) / (reserveA + amountIn)
     */
-    function getAmountOut(address _tokenA, address _tokenB, uint amountIn) external view returns (uint amountOut){
+    function getAmountOut(uint amountIn, uint256 reserveIn, uint256 reserveOut) external pure returns (uint amountOut){
         require(amountIn > 0,"Positive number of token A is required.");
-        require(_tokenA==tokenA && _tokenB==tokenB,"Token not found.");
-        return ((amountIn * reserveB) / (reserveA + amountIn));
+        require(reserveIn > 0,"Positive of reserve of token A is required.");
+        require(reserveOut > 0,"Positive of reserve of token A is required.");
+  
+        return ((amountIn * reserveOut) / (reserveIn + amountIn));
     }
 
 }
